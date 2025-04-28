@@ -1,0 +1,198 @@
+# YOLOv12 Underwater Object Detection
+
+**YOLO12-UnderWater** is a pipeline for detecting objects in underwater (brackish) imagery using the latest YOLOv12 model.
+
+## Features
+
+- Real-time inference on images or videos via a Gradio-based UI
+- Support for multiple underwater datasets and custom configurations
+- Exportable ONNX model and PyTorch weights
+- Interactive Jupyter notebook for experimentation
+
+## About YOLOv12
+**YOLOv12** is the latest release in the renowned YOLO (You Only Look Once) family of object detection models, designed to achieve real-time performance without sacrificing accuracy.  
+Unlike previous versions that primarily relied on convolutional neural networks (CNNs), YOLOv12 integrates modern attention mechanisms to enhance the detection of complex objects across various environments.
+
+### Key Features
+
+- **Area Attention Mechanism**:  
+  Instead of using computationally expensive global self-attention, YOLOv12 partitions feature maps into smaller areas and applies local attention. This reduces computational complexity from O(n²) to O(n) while preserving a wide receptive field.
+
+- **R-ELAN (Residual Efficient Layer Aggregation Network)**:  
+  An improved feature aggregation module that leverages residual connections and efficient scaling, making the model more stable to train, especially in larger architectures.
+
+- **Optimized Attention Architecture**:  
+  YOLOv12 incorporates FlashAttention to minimize memory access overhead, removes traditional positional encodings for faster computation, and introduces 7×7 depthwise convolutions to efficiently encode spatial information.
+
+- **Outstanding Performance**:  
+  On the COCO val2017 dataset, YOLOv12-N achieves 40.6% mAP with an inference latency of just 1.64 ms on a T4 GPU, outperforming previous models like YOLOv10-N and YOLOv11-N in both accuracy and speed.  
+  ([Reference - arXiv:2502.12524](https://arxiv.org/abs/2502.12524?utm_source=chatgpt.com))
+
+- **Multi-Task Support**:  
+  Beyond object detection, YOLOv12 also supports instance segmentation, image classification, pose estimation, and oriented object detection (OBB), making it highly versatile for a wide range of computer vision tasks.
+
+With these innovations, YOLOv12 stands out as an ideal solution for applications demanding fast and accurate object detection — especially in challenging environments like underwater imaging.
+
+## Repository Structure
+
+```
+├── app.py                   # Gradio app for inference
+├── train.py                 # Export model and process weights
+├── configs/                 # Dataset & model YAML config files
+├── datasets/                # Source data and preprocessing scripts
+├── outputs/                 # Training outputs: logs, weights, examples
+├── weights/                 # Pre-trained checkpoints (e.g., best.pt)
+├── yolo12/                  # Core YOLOv12 implementation (models, dataloader, training, loss, detection & augmentation modules)
+├── yolo12-brackish.ipynb    # Notebook for interactive testing
+└── yolo12.onnx              # Exported ONNX model
+```
+
+## Installation
+
+**Requirements**: Python >=3.8, CUDA 11.8+ recommended for GPU acceleration
+
+1. Clone this repo:
+   ```bash
+   git clone https://github.com/yourusername/YOLO12-UnderWater.git
+   cd YOLO12-UnderWater
+   ```
+2. (Optional) Create and activate a virtual environment:
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # or `venv\Scripts\activate` on Windows
+   ```
+3. Install dependencies:
+   ```bash
+   pip install torch torchvision opencv-python gradio pyyaml onnx
+   ```
+
+## Usage
+
+### Inference
+
+Launch the Gradio app to run inference on images or videos:
+
+```bash
+python app.py
+```
+
+- **Image**: Upload a `.jpg`, `.png`, etc., and click **Detect Objects**.
+- **Video**: Upload a `.mp4`, `.webm`, etc., and view the annotated video output.
+
+#### Sample Detection
+
+![Sample Detection](outputs/Brackish/val_batch0_pred.jpg)
+
+## Training Results
+The model has been trained on multiple underwater datasets. Below are visual summaries of training outcomes, including loss/mAP plots, sample batches, and confusion matrices.
+
+### Overall Performance
+
+#### Brackish Dataset
+- **Training & Validation Metrics**: `results.png` shows training and validation loss curves (left) vs. epochs and mAP@0.5 trends (right), illustrating model convergence and accuracy gains over time.
+![Brackish Results Overview](outputs/Brackish/results.png)
+
+#### Audd Dataset
+- **Training & Validation Metrics**: Similar overview of loss curves and mAP progression.
+![Audd Results Overview](outputs/Audd/results.png)
+
+### Sample Training & Validation Examples
+
+#### DUO Dataset
+- **Label Distribution**: Visualizes the count of each class in the DUO dataset.
+![DUO Label Distribution](outputs/DUO/labels.jpg)
+- **Sample Training Batch**: A batch of training images with ground-truth bounding boxes.
+![DUO Training Batch Sample](outputs/DUO/train_batch0.jpg)
+
+#### UPPC2019 Dataset
+- **Normalized Confusion Matrix**: Class-wise prediction accuracy normalized by true label counts.
+![UPPC2019 Confusion Matrix](outputs/uppc2019/confusion_matrix_normalized.png)
+- **Validation Prediction Sample**: Overlay of predicted boxes on a validation image.
+![UPPC2019 Validation Prediction](outputs/uppc2019/val_batch1_pred.jpg)
+
+### Precision & Recall Curves
+Precision and recall curves track detection performance across confidence thresholds and epochs:
+| Dataset  | Precision (P)                                | Recall (R)                                  | PR Curve                                  | F1 Curve                                  |
+|----------|----------------------------------------------|---------------------------------------------|-------------------------------------------|-------------------------------------------|
+| Brackish | ![P](outputs/Brackish/P_curve.png)           | ![R](outputs/Brackish/R_curve.png)          | ![PR](outputs/Brackish/PR_curve.png)      | ![F1](outputs/Brackish/F1_curve.png)      |
+| Audd     | ![P](outputs/Audd/P_curve.png)               | ![R](outputs/Audd/R_curve.png)              | ![PR](outputs/Audd/PR_curve.png)          | ![F1](outputs/Audd/F1_curve.png)          |
+| UPPC2019 | ![P](outputs/uppc2019/P_curve.png)           | ![R](outputs/uppc2019/R_curve.png)          | ![PR](outputs/uppc2019/PR_curve.png)      | ![F1](outputs/uppc2019/F1_curve.png)      |
+
+### Export & Weights
+
+- **Export ONNX**: Use the following code to export your model to ONNX format:
+  ```python
+  from yolo12 import YOLO
+  
+  # Load model from YAML config
+  model = YOLO("yolo12/cfg/models/12/yolo12.yaml")
+  
+  # Export to ONNX format
+  model.export(format="onnx", imgsz=640)
+  ```
+
+- **Convert .pt to state_dict**: Load a trained checkpoint and save its state dictionary:
+  ```python
+  import torch
+  
+  # Load checkpoint
+  weights = torch.load("./outputs/Brackish/weights/best.pt")
+  
+  # Save state dictionary
+  torch.save(weights["model"].state_dict(), "./brackish_weights.pt")
+  ```
+
+- **Pre-trained Weights**: Download the latest model checkpoints from [Kaggle: YOLO12 Weights](https://www.kaggle.com/models/nguyenchitinh/yolo12)
+
+### Notebook
+
+Open `yolo12-brackish.ipynb` for examples of running inference and visualizing results.
+
+## Configuration
+
+Configuration files are in the `configs/` directory and use YAML to specify:
+- **path**: Directory containing images and labels.
+- **nc**: Number of object classes.
+- **names**: List of class names.
+- **epochs**, **batch_size**, **lr0**: Key training hyperparameters.
+- **imgsz**: Default image size for training and inference.
+- **project**: Prefix used for output run folders.
+
+To add a new dataset, copy an existing YAML, update the fields above, and reference it in your commands. Example:
+```yaml
+# configs/custom_dataset.yaml
+path: ../datasets/custom_dataset
+nc: 3
+names: ['fish', 'coral', 'rock']
+epochs: 50
+batch_size: 16
+lr0: 0.01
+imgsz: 640
+project: custom_run
+```
+
+## Outputs & Checkpoints
+- **outputs/**
+  - Contains time-stamped subfolders (e.g., `Brackish_2025-04-28_164500`) for each run.
+  - Each run folder includes:
+    - `results.png` (precision-recall curves and loss plots)
+    - `metrics.txt` (detailed performance metrics)
+    - `weights/` (checkpoints saved during training)
+- **weights/**
+  - Store your final `.pt` checkpoints (e.g., `best.pt`).
+  - Recommend renaming to include run details, e.g., `brackish_best_epoch50.pt`.
+  - Use these for inference or export by pointing your UI or CLI to the checkpoint path.
+
+## Contributing
+We welcome contributions! To get started:
+1. Fork the repository and create a branch (`feature/<feature-name>` or `fix/<issue-number>`).
+2. Follow PEP8 for Python code and write clear, descriptive commit messages.
+3. Add or update documentation, tests, and examples for new features or bug fixes.
+4. Open a pull request describing your changes and link related issues.
+5. Ensure all checks and CI pipelines pass before requesting a review.
+
+For major changes (new architectures, significant refactoring), please open an issue first to discuss design and scope.
+
+## License
+
+This project is released under the MIT License. See [LICENSE](LICENSE) for details.
