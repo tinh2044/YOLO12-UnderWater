@@ -175,15 +175,6 @@ print(f"CUDA version: {torch.version.cuda}")
 
 Download weights: [Kaggle: YOLO12 Weights](https://www.kaggle.com/models/nguyenchitinh/yolo12)
 
-## Citation
-
-```bibtex
-@article{yolov12underwater2025,
-    title={YOLOv12-UnderWater: Advancing Underwater Object Detection through Optimized Architecture and Augmentation},
-    year={2025},
-    url={https://github.com/tinh2044/YOLO12-UnderWater}
-}
-```
 
 ## License
 
