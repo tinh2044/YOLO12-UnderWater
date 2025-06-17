@@ -59,27 +59,102 @@ hsv_v: 0.4      # Lighting variations
 
 ## 4. Implementation
 
-### 4.1 Installation
+### 4.1 System Requirements
+
+**Version Requirements:**
+- **Python**: 3.8 or higher
+- **PyTorch**: 1.8.0 or higher (supports up to 2.4.0, except 2.4.0 on Windows)
+- **CUDA**: 11.0 or higher (for GPU acceleration)
+- **NVIDIA Drivers**: 450.80+ recommended
+- **CUDA Compute Capability**: 6.1+
+
+**Required Dependencies:**
+See `requirements.txt` for complete list of dependencies with version specifications.
+
+### 4.2 Installation
 ```bash
 git clone https://github.com/tinh2044/YOLO12-UnderWater.git
 cd YOLO12-UnderWater
-pip install torch torchvision opencv-python gradio pyyaml onnx
+pip install -r requirements.txt
 ```
 
-### 4.2 Usage
+**Alternative installation (manual):**
 ```bash
-# Inference
-python app.py
+pip install torch torchvision opencv-python gradio pyyaml onnx numpy tqdm tensorboard pillow matplotlib scipy requests ultralytics
+```
 
-# Export model
+### 4.3 Usage
+
+#### Web Interface
+```bash
+# Launch Gradio web interface for inference
+python app.py
+```
+**Features:**
+- Image and video object detection
+- Adjustable confidence threshold (0.0-1.0, default: 0.25)
+- Adjustable image size (320-1280, default: 640)
+- Real-time visualization
+
+#### Training and Model Export
+```bash
+# Train model and export to ONNX
 python train.py
 ```
 
-### 4.3 Model Export
+#### Programmatic Usage
 ```python
 from yolo12 import YOLO
+
+# Load pre-trained model
+model = YOLO("./outputs/Brackish/weights/best.pt")
+
+# Inference on image
+results = model.predict(source="image.jpg", imgsz=640, conf=0.25)
+
+# Training (custom dataset)
 model = YOLO("yolo12/cfg/models/12/yolo12.yaml")
+results = model.train(data="path/to/dataset.yaml", epochs=50, imgsz=640)
+
+# Export model
 model.export(format="onnx", imgsz=640)
+```
+
+### 4.4 File Structure
+```
+├── yolo12/                  # Core YOLOv12 implementation
+│   ├── cfg/models/12/       # Model configuration files
+│   ├── utils/               # Utility functions
+│   ├── nn/                  # Neural network modules
+│   └── engine/              # Training and inference engines
+├── configs/                 # Dataset configurations  
+├── outputs/                 # Training results and model weights
+│   └── Brackish/weights/    # Pre-trained model weights
+├── datasets/                # Dataset storage
+├── app.py                   # Web interface for inference
+├── train.py                 # Training and export script
+├── requirements.txt         # Python dependencies
+└── README.md               # This file
+```
+
+### 4.5 Quick Start Commands
+
+**For immediate inference:**
+```bash
+python app.py  # Launch web interface
+```
+
+**For model training:**
+```bash
+python train.py  # Train and export model
+```
+
+**Check system compatibility:**
+```python
+import torch
+print(f"Python version: {torch.__version__}")
+print(f"CUDA available: {torch.cuda.is_available()}")
+print(f"CUDA version: {torch.version.cuda}")
 ```
 
 ## 5. Visual Results
